@@ -40,17 +40,6 @@ jobs:
       - name: Build project
         run: bun run build
 
-      - name: Check where files are
-        run: |
-          echo "=== Проверяем корень ==="
-          ls -la
-          echo "=== Проверяем папку .output (если есть) ==="
-          ls -la .output || true
-          echo "=== Проверяем папку .output/public (если есть) ==="
-          ls -la .output/public || true
-          echo "=== Проверяем папку dist (если есть) ==="
-          ls -la dist || true
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
