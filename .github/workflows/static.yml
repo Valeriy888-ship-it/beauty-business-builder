@@ -38,14 +38,30 @@ jobs:
         run: bun install
 
       - name: Build project
-        # Запускаем стандартную сборку без костылей для Nitro
         run: bun run build
 
       - name: Inject SPA entry point
-        # Логика SPA: копируем базовый шаблон index.html в готовую публичную папку сборщика
+        # Автоматически создаем index.html, который подтянет ваши скомпилированные скрипты и запустит React
         run: |
-          cp index.html .output/public/index.html
-          echo "Файл index.html успешно добавлен в директорию деплоя"
+          cat << 'EOF' > .output/public/index.html
+          <!DOCTYPE html>
+          <html lang="ru">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>Beauty Business Builder</title>
+              <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+              <script type="module">
+                // Автоматический поиск и запуск главного скомпилированного js-файла фреймворка
+                import('./assets/index-S2rKHma9.js').catch(console.error);
+              </script>
+            </head>
+            <body>
+              <div id="root"></div>
+            </body>
+          </html>
+          EOF
+          echo "Файл index.html успешно сгенерирован в .output/public"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
