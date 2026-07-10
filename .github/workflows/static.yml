@@ -1,4 +1,3 @@
-# Название workflow
 name: Deploy static content to Pages
 
 on:
@@ -47,9 +46,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Загружаем корень репозитория, так как сборщик Lovable
-          # генерирует готовые файлы именно туда
-          path: '.'
+          # Указываем точную папку сборщика Nitro
+          path: '.output/public'
 
       - name: Deploy to GitHub Pages
         id: deployment
