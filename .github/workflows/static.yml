@@ -37,31 +37,11 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Build project
+      - name: Build static site
+        # Переключаем Nitro в режим генерации чистого SPA без SSR-сервера
         run: bun run build
-
-      - name: Inject SPA entry point
-        # Автоматически создаем index.html, который подтянет ваши скомпилированные скрипты и запустит React
-        run: |
-          cat << 'EOF' > .output/public/index.html
-          <!DOCTYPE html>
-          <html lang="ru">
-            <head>
-              <meta charset="UTF-8" />
-              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-              <title>Beauty Business Builder</title>
-              <link rel="icon" type="image/x-icon" href="./favicon.ico" />
-              <script type="module">
-                // Автоматический поиск и запуск главного скомпилированного js-файла фреймворка
-                import('./assets/index-S2rKHma9.js').catch(console.error);
-              </script>
-            </head>
-            <body>
-              <div id="root"></div>
-            </body>
-          </html>
-          EOF
-          echo "Файл index.html успешно сгенерирован в .output/public"
+        env:
+          NITRO_PRESET: static
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -69,6 +49,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
+          # В режиме static сборщик Nitro сам создаст правильный html в папке .output/public
           path: '.output/public'
 
       - name: Deploy to GitHub Pages
