@@ -1,4 +1,4 @@
-# Workflow для сборки и деплоя React/Vite проекта на GitHub Pages
+# Название workflow
 name: Deploy static content to Pages
 
 on:
@@ -47,7 +47,9 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          # Загружаем корень репозитория, так как сборщик Lovable
+          # генерирует готовые файлы именно туда
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
