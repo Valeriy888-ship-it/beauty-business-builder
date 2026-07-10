@@ -38,7 +38,14 @@ jobs:
         run: bun install
 
       - name: Build project
+        # Запускаем стандартную сборку без костылей для Nitro
         run: bun run build
+
+      - name: Inject SPA entry point
+        # Логика SPA: копируем базовый шаблон index.html в готовую публичную папку сборщика
+        run: |
+          cp index.html .output/public/index.html
+          echo "Файл index.html успешно добавлен в директорию деплоя"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
