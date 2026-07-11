@@ -20,10 +20,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    env:
-      # Nitro static preset — генерирует полностью статический сайт в .output/public,
-      # с index.html, 404.html и .nojekyll (нужен для GitHub Pages).
-      NITRO_PRESET: github-pages
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,13 +32,46 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Build static site
+      - name: Build client bundle
+        # Обычный vite build (без NITRO_PRESET) — генерирует клиентские
+        # ассеты в .output/public/assets с хешированными именами.
         run: bun run build
 
-      - name: Ensure SPA fallback and Jekyll disabled
+      - name: Assemble index.html and 404.html from real asset hashes
         run: |
-          cp -f .output/public/index.html .output/public/404.html 2>/dev/null || true
-          touch .output/public/.nojekyll
+          set -euo pipefail
+          PUB=.output/public
+
+          # Находим реальные имена собранных ассетов (хеши меняются каждую сборку).
+          CSS=$(basename "$(ls "$PUB"/assets/styles-*.css | head -n1)")
+          JS=$(basename "$(ls "$PUB"/assets/index-*.js | head -n1)")
+
+          echo "CSS asset: $CSS"
+          echo "JS asset:  $JS"
+
+          cat > "$PUB/index.html" <<HTML
+          <!DOCTYPE html>
+          <html lang="ru">
+            <head>
+              <meta charset="UTF-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+              <title>Панков System — инженерия beauty-бизнеса</title>
+              <meta name="description" content="Метод построения устойчивого beauty-бизнеса с доходом 150 000+ рублей." />
+              <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+              <link rel="stylesheet" href="./assets/${CSS}" />
+              <script type="module" src="./assets/${JS}"></script>
+            </head>
+            <body>
+              <div id="root"></div>
+            </body>
+          </html>
+          HTML
+
+          # 404-фолбэк для SPA-роутинга на GitHub Pages.
+          cp "$PUB/index.html" "$PUB/404.html"
+
+          # Отключаем Jekyll (иначе GH Pages игнорит файлы, начинающиеся с _).
+          touch "$PUB/.nojekyll"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
