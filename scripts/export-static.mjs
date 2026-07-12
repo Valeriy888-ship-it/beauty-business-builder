@@ -1,8 +1,9 @@
-import { copyFile, mkdir, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, writeFile, cp } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
-const outDir = resolve("dist/client");
-const serverEntry = resolve("dist/server/index.mjs");
+const outDir = resolve(".output/public");
+const serverEntry = resolve(".output/server/index.mjs");
 
 const handler = (await import(serverEntry)).default;
 const context = { waitUntil() {} };
@@ -25,8 +26,9 @@ function makeRepoRelative(html) {
     .replaceAll('src="/__l5e/assets-v1/0b286332-7e10-481e-b1cf-6a492de34373/valeriy-pankov.png"', 'src="./assets/valeriy-pankov.png"');
 }
 
-const html = makeRepoRelative(await render("/"));
 await mkdir(outDir, { recursive: true });
+
+const html = makeRepoRelative(await render("/"));
 await writeFile(resolve(outDir, "index.html"), html);
 await writeFile(resolve(outDir, "404.html"), html);
 await writeFile(resolve(outDir, ".nojekyll"), "");
@@ -36,11 +38,18 @@ if (sitemap.ok) {
   await writeFile(resolve(outDir, "sitemap.xml"), await sitemap.text());
 }
 
-await mkdir(dirname(resolve(outDir, "assets/valeriy-pankov.png")), { recursive: true });
-try {
-  await copyFile(resolve("public/assets/valeriy-pankov.png"), resolve(outDir, "assets/valeriy-pankov.png"));
-} catch {
-  // The public asset is already copied by Vite when present.
+const pngSrc = resolve("public/assets/valeriy-pankov.png");
+const pngDst = resolve(outDir, "assets/valeriy-pankov.png");
+if (existsSync(pngSrc)) {
+  await mkdir(dirname(pngDst), { recursive: true });
+  try {
+    await copyFile(pngSrc, pngDst);
+  } catch {}
 }
 
-console.log("Static export complete: dist/client/index.html, 404.html, sitemap.xml");
+// Mirror to dist/client for backwards compatibility if anything still expects it.
+const legacyOut = resolve("dist/client");
+await mkdir(legacyOut, { recursive: true });
+await cp(outDir, legacyOut, { recursive: true });
+
+console.log("Static export complete:", outDir);
