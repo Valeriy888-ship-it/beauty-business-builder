@@ -2,8 +2,8 @@ import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
-const outDir = resolve("dist/client");
-const serverEntry = resolve("dist/server/index.mjs");
+const outDir = resolve(".output/public");
+const serverEntry = resolve(".output/server/index.mjs");
 
 const handler = (await import(serverEntry)).default;
 const context = { waitUntil() {} };
