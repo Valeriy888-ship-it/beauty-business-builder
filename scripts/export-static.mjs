@@ -1,9 +1,18 @@
-import { copyFile, mkdir, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
-const outDir = resolve("dist/client");
-const serverEntry = resolve("dist/server/index.mjs");
+const outDir = resolve("dist/static");
+const clientBuildDir = firstExisting([resolve("dist/client"), resolve(".output/public")]);
+const serverEntry = firstExisting([resolve("dist/server/index.mjs"), resolve(".output/server/index.mjs")]);
+
+if (!clientBuildDir) {
+  throw new Error("Static export failed: client build output was not found in dist/client or .output/public");
+}
+
+if (!serverEntry) {
+  throw new Error("Static export failed: server entry was not found in dist/server/index.mjs or .output/server/index.mjs");
+}
 
 const handler = (await import(serverEntry)).default;
 const context = { waitUntil() {} };
@@ -20,7 +29,12 @@ async function render(path) {
   return response.text();
 }
 
+function firstExisting(paths) {
+  return paths.find((path) => existsSync(path));
+}
+
 await mkdir(outDir, { recursive: true });
+await cp(clientBuildDir, outDir, { recursive: true, force: true });
 
 const html = await render(normalizedBase);
 await writeFile(resolve(outDir, "index.html"), html);
